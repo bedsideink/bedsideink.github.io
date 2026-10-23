@@ -1,0 +1,413 @@
+/* 配色對應 Android 的 ui/Theme.kt 與 ink/InkRender.kt；跟隨系統深色／淺色設定。 */
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --text: #1a1c1e;
+  --muted: #44474e;
+  --outline: #74777f;
+  --divider: #c4c6d0;
+  --primary: #1f3a5f;
+  --on-primary: #ffffff;
+  --tonal: #dce6f2;
+  --on-tonal: #0f1d2b;
+  --surface-high: #edf0f4;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error-container: #410002;
+  /* 畫布 */
+  --paper: #ffffff;
+  --ink: #14213d;
+  --separator: #9aa5b1;
+  /* 主治醫師名字，依醫師出現順序循環使用 */
+  --att-0: #1565c0;
+  --att-1: #c62828;
+  --att-2: #2e7d32;
+  --att-3: #6a1b9a;
+  --att-4: #b45309;
+  --att-5: #00838f;
+  --att-6: #ad1457;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181c;
+    --text: #e2e2e6;
+    --muted: #c4c6d0;
+    --outline: #8e9099;
+    --divider: #44474e;
+    --primary: #9cc2ec;
+    --on-primary: #0b2440;
+    --tonal: #2e4258;
+    --on-tonal: #d6e4f2;
+    --surface-high: #262a30;
+    --error: #ffb4ab;
+    --error-container: #93000a;
+    --on-error-container: #ffdad6;
+    --paper: #16181c;
+    --ink: #e8ecf2;
+    --separator: #5c6773;
+    --att-0: #90caf9;
+    --att-1: #ef9a9a;
+    --att-2: #a5d6a7;
+    --att-3: #ce93d8;
+    --att-4: #ffcc80;
+    --att-5: #80deea;
+    --att-6: #f48fb1;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+[hidden] { display: none !important; }
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.scroll {
+  flex: 1;
+  position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.paper { background: var(--paper); }
+.grow { flex: 1; min-width: 0; }
+.muted-text { color: var(--muted); }
+
+.empty {
+  margin: 0;
+  padding: 64px 24px;
+  text-align: center;
+  white-space: pre-line;
+  color: var(--muted);
+}
+
+/* 按鈕 */
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.38; cursor: default; }
+
+.icon { fill: currentColor; flex: none; }
+
+.icon-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.icon-btn.tonal { width: 40px; height: 40px; background: var(--tonal); color: var(--on-tonal); }
+.icon-btn.muted { color: var(--muted); }
+
+.primary { background: var(--primary); color: var(--on-primary); }
+.tonal { background: var(--tonal); color: var(--on-tonal); }
+
+.bar-btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 4px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.mode-btn {
+  width: 100%;
+  height: 64px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.text-btn {
+  padding: 10px 12px;
+  border-radius: 20px;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.text-btn.danger { color: var(--error); }
+
+/* 頂端列 */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 64px;
+  padding: 0 4px;
+  flex: none;
+}
+
+.topbar-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 選擇畫面 */
+.start-content {
+  width: 100%;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.scan-big {
+  width: 160px;
+  height: 160px;
+  border-radius: 28px;
+  background: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 22px;
+}
+
+.start-content h1 {
+  margin: 32px 0 16px;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+/* 清單 */
+.list-bar { flex: none; background: var(--bg); }
+
+.list-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+}
+
+.banner {
+  padding: 4px 16px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows > li { border-bottom: 1px solid var(--divider); }
+
+.row { cursor: pointer; }
+
+.doctor-row { padding: 16px; font-size: 22px; }
+.history-row { padding: 12px 16px; }
+.history-day { font-size: 22px; }
+
+.patient-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 4px 4px 16px;
+}
+
+.patient-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.patient-title.ink-row { display: flex; align-items: center; gap: 8px; }
+
+.attending.att-0 { color: var(--att-0); }
+.attending.att-1 { color: var(--att-1); }
+.attending.att-2 { color: var(--att-2); }
+.attending.att-3 { color: var(--att-3); }
+.attending.att-4 { color: var(--att-4); }
+.attending.att-5 { color: var(--att-5); }
+.attending.att-6 { color: var(--att-6); }
+
+.preview {
+  margin: 4px 8px 8px;
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  background: var(--paper);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* 唯讀筆跡 */
+svg.notes { display: block; width: 100%; height: auto; }
+svg.notes.fit { height: 100%; }
+svg.ink-title { flex: none; display: block; }
+
+.ink path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+line.separator { stroke: var(--separator); stroke-width: 20; }
+
+/* 總覽 */
+.overview { list-style: none; margin: 0; padding: 0; }
+.overview > li { border-bottom: 2px solid var(--outline); }
+.overview > li.clickable { cursor: pointer; }
+.overview .patient-title { padding: 12px 16px 0; }
+.overview .no-notes { margin: 0; padding: 4px 16px 12px; }
+
+/* 書寫畫布 */
+.ink-wrap {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: var(--paper);
+  touch-action: none;
+}
+
+.ink-wrap canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hint { margin: 0; padding: 8px 16px; color: var(--muted); font-size: 14px; }
+
+.cells { border-top: 2px solid var(--divider); }
+.ink-wrap.cell { flex: none; height: 120px; border-bottom: 2px solid var(--divider); }
+
+/* 掃描 */
+.scan-view { position: relative; flex: 1; background: #000; overflow: hidden; }
+
+.scan-view video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(80vw, 60vh);
+  height: min(80vw, 60vh);
+  transform: translate(-50%, -50%);
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.scan-view .mode-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 240px;
+  transform: translate(-50%, -50%);
+}
+
+.scan-status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+/* 對話框 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
+}
+
+.dialog {
+  background: var(--surface-high);
+  border-radius: 28px;
+  padding: 24px 24px 12px;
+  min-width: 280px;
+  max-width: 560px;
+}
+
+.dialog-body p { margin: 0 0 8px; }
+.dialog-title { font-size: 17px; font-weight: 500; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* 新版提示列 */
+.update-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 24px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
