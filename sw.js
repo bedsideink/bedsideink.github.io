@@ -2,7 +2,7 @@
 // 只快取自己的檔案，不轉送任何資料。部署時 deploy-web.sh 會把 VERSION 換成檔案內容的雜湊，
 // 檔案有變動時瀏覽器才會安裝新版，app 內出現「有新版本」提示。
 
-const VERSION = '3eb545749db0';
+const VERSION = 'a370c062ec5b';
 const CACHE = `bedsideink-${VERSION}`;
 
 const FILES = [
@@ -49,8 +49,14 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const hit = await cache.match(req, { ignoreSearch: true })
-      ?? (req.mode === 'navigate' ? await cache.match('./') : undefined);
-    return hit ?? fetch(req);
+    const hit = await cache.match(req, { ignoreSearch: true });
+    if (hit) return hit;
+    // 不在快取裡的檔案（例如同站的匯入頁）照常向網路要；離線時頁面改開 app
+    try {
+      return await fetch(req);
+    } catch (e) {
+      if (req.mode === 'navigate') return cache.match('./');
+      throw e;
+    }
   })());
 });
