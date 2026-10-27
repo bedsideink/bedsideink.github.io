@@ -2,8 +2,8 @@
 // 對應 Android 的 ui/BedsideNav.kt。
 
 import * as db from './db.js';
-import { h } from './ui.js';
-import { state } from './state.js';
+import { h, setTextScale } from './ui.js';
+import { loadTextScale, state } from './state.js';
 import { startScreen, doctorsScreen } from './screens/start.js';
 import { listScreen } from './screens/list.js';
 import { writeScreen } from './screens/write.js';
@@ -23,6 +23,8 @@ const SCREENS = {
   historyDay: historyOverviewScreen,
   scan: scanScreen,
 };
+
+setTextScale(loadTextScale());
 
 const root = document.getElementById('app');
 /** 導覽堆疊：[{ name, screen: { el, resume?, hide?, destroy? } }]；下層畫面保留 DOM（捲動位置、展開狀態）。 */

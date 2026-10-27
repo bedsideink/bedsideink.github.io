@@ -1,6 +1,8 @@
 /* 配色對應 Android 的 ui/Theme.kt 與 ink/InkRender.kt；跟隨系統深色／淺色設定。 */
 :root {
   color-scheme: light dark;
+  /* 設定中的字體大小倍率，由 ui.js 的 setTextScale 設定；只影響文字，版面不變 */
+  --text-scale: 1;
   --bg: #ffffff;
   --text: #1a1c1e;
   --muted: #44474e;
@@ -65,7 +67,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-  font-size: 16px;
+  font-size: calc(16px * var(--text-scale));
   -webkit-text-size-adjust: 100%;
   -webkit-user-select: none;
   user-select: none;
@@ -150,6 +152,9 @@ button:disabled { opacity: 0.38; cursor: default; }
   padding: 0 4px;
   white-space: nowrap;
   font-weight: 500;
+  /* 字體放大時文字按鈕縮窄、裁掉超出的字，兩側圖示鈕（含設定鈕）一定留在畫面上 */
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mode-btn {
@@ -160,7 +165,7 @@ button:disabled { opacity: 0.38; cursor: default; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 17px;
+  font-size: calc(17px * var(--text-scale));
   font-weight: 500;
 }
 
@@ -186,7 +191,7 @@ button:disabled { opacity: 0.38; cursor: default; }
 .topbar-title {
   flex: 1;
   min-width: 0;
-  font-size: 22px;
+  font-size: calc(22px * var(--text-scale));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -217,12 +222,12 @@ button:disabled { opacity: 0.38; cursor: default; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 22px;
+  font-size: calc(22px * var(--text-scale));
 }
 
 .start-content h1 {
   margin: 32px 0 16px;
-  font-size: 28px;
+  font-size: calc(28px * var(--text-scale));
   font-weight: 400;
 }
 
@@ -240,7 +245,7 @@ button:disabled { opacity: 0.38; cursor: default; }
   padding: 4px 16px;
   background: var(--error-container);
   color: var(--on-error-container);
-  font-size: 14px;
+  font-size: calc(14px * var(--text-scale));
   font-weight: 500;
 }
 
@@ -249,15 +254,29 @@ button:disabled { opacity: 0.38; cursor: default; }
 
 .row { cursor: pointer; }
 
-.doctor-row { padding: 16px; font-size: 22px; }
+.doctor-row { padding: 16px; font-size: calc(22px * var(--text-scale)); }
 .history-row { padding: 12px 16px; }
-.history-day { font-size: 22px; }
+.history-day { font-size: calc(22px * var(--text-scale)); }
 
 .patient-row {
   display: flex;
   align-items: center;
+  min-height: 56px;
   padding: 4px 4px 4px 16px;
 }
+
+.patient-row.with-check { padding-left: 4px; }
+
+.check { color: var(--muted); }
+.check.checked { color: var(--primary); }
+
+.scale-row { display: flex; align-items: center; padding: 8px 0 8px 12px; border-bottom: 1px solid var(--divider); }
+.scale-row .grow, .scale-row .text-btn { flex: none; white-space: nowrap; }
+.scale-row .grow { flex: 1 0 auto; }
+.scale-value { min-width: 3em; text-align: center; }
+.dialog-section { margin: 12px 0 0 12px; font-size: calc(14px * var(--text-scale)); font-weight: 500; color: var(--muted); }
+.field-list { display: flex; flex-direction: column; }
+.field-row { display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 12px; font-size: calc(16px * var(--text-scale)); text-align: left; }
 
 .patient-title {
   white-space: nowrap;
@@ -325,7 +344,7 @@ line.separator { stroke: var(--separator); stroke-width: 20; }
   height: 100%;
 }
 
-.hint { margin: 0; padding: 8px 16px; color: var(--muted); font-size: 14px; }
+.hint { margin: 0; padding: 8px 16px; color: var(--muted); font-size: calc(14px * var(--text-scale)); }
 
 .cells { border-top: 2px solid var(--divider); }
 .ink-wrap.cell { flex: none; height: 120px; border-bottom: 2px solid var(--divider); }
@@ -369,7 +388,7 @@ line.separator { stroke: var(--separator); stroke-width: 20; }
   padding: 16px;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: 17px;
+  font-size: calc(17px * var(--text-scale));
   font-weight: 500;
 }
 
@@ -389,12 +408,14 @@ line.separator { stroke: var(--separator); stroke-width: 20; }
   background: var(--surface-high);
   border-radius: 28px;
   padding: 24px 24px 12px;
+  max-height: 100%;
+  overflow-y: auto;
   min-width: 280px;
   max-width: 560px;
 }
 
 .dialog-body p { margin: 0 0 8px; }
-.dialog-title { font-size: 17px; font-weight: 500; }
+.dialog-title { font-size: calc(17px * var(--text-scale)); font-weight: 500; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
 /* 新版提示列 */

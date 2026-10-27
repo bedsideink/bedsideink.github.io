@@ -1,7 +1,7 @@
 // 共用的 DOM 工具：元素建立、圖示、唯讀筆跡（SVG）、病人標題、對話框。
 
 import { CANVAS_WIDTH, STROKE_WIDTH, pathData } from './ink.js';
-import { isHandwritten, titleText } from './model.js';
+import { isHandwritten, listTitleText, titleText } from './model.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -37,6 +37,9 @@ const ICONS = {
   list: 'M3 14h4v-4H3v4zm0 5h4v-4H3v4zM3 9h4V5H3v4zm5 5h13v-4H8v4zm0 5h13v-4H8v4zM8 5v4h13V5H8z',
   book: 'M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z',
   edit: 'M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29zm-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z',
+  settings: 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
+  checkbox: 'M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z',
+  checked: 'M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
   delete: 'M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z',
   qr: 'M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM22 7h-2V4h-3V2h5v5zm0 15v-5h-2v3h-3v2h5zM2 22h5v-2H4v-3H2v5zM2 2v5h2V4h3V2H2z',
   // 「依主治醫師」：一個人頭，下方三條清單線
@@ -86,6 +89,16 @@ export function previewSvg(segments, contentHeight, pad) {
   }, segmentsGroup(segments));
 }
 
+let textScale = 1;
+
+/** 整個 app 的文字倍率：CSS 的字級透過 --text-scale，病人標題的字級在這裡乘上。 */
+export function setTextScale(scale) {
+  textScale = scale;
+  document.documentElement.style.setProperty('--text-scale', String(scale));
+}
+
+export const getTextScale = () => textScale;
+
 /** 筆跡標題相對於字級的高度，讓它和文字標題看起來差不多大。 */
 const INK_TITLE_HEIGHT_EM = 1.35;
 const MIN_TITLE_STROKE_PX = 2;
@@ -113,9 +126,11 @@ export function attendingStyle(order, colored) {
 /**
  * 病人標題；有主治醫師時，名字以較小字級放在最前面。
  * size：{ title, attending }（px）。
+ * fields 只用在清單頁：依設定略去主治醫師與部分文字項目（取代 withChartNo）。
  */
-export function patientTitle(p, { withChartNo, size, style }) {
-  const attending = p.attending != null
+export function patientTitle(p, { withChartNo, size: base, style, fields }) {
+  const size = { title: base.title * textScale, attending: base.attending * textScale };
+  const attending = p.attending != null && fields?.attending !== false
     ? h('span', { class: ['attending', style?.(p.attending)].filter(Boolean).join(' '), style: { fontSize: size.attending + 'px' } }, p.attending)
     : null;
   const el = h('div', { class: 'patient-title', style: { fontSize: size.title + 'px' } });
@@ -123,8 +138,9 @@ export function patientTitle(p, { withChartNo, size, style }) {
     el.classList.add('ink-row');
     el.append(...[attending, inkTitle(p, size.title)].filter(Boolean));
   } else {
-    if (attending) el.append(attending, '\u00a0\u00a0');
-    el.append(titleText(p, withChartNo));
+    const text = fields ? listTitleText(p, fields) : titleText(p, withChartNo);
+    if (attending) el.append(attending, text ? '\u00a0\u00a0' : '');
+    el.append(text);
   }
   return el;
 }

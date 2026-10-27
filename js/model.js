@@ -78,7 +78,7 @@ export function computeImportPlan(existing, incoming) {
     } else {
       inserts.push({
         sortOrder: i, attending: p.attending, bed: p.bed, name: p.name,
-        chartNo: p.chartNo, discharge, titleInk: null, titleWidth: 0, titleHeight: 0,
+        chartNo: p.chartNo, discharge, titleInk: null, titleWidth: 0, titleHeight: 0, done: false,
       });
     }
   });
@@ -138,6 +138,32 @@ export function titleText(p, withChartNo) {
   const d = displayDischarge(p.discharge);
   if (d) s += ` ${d}`;
   return s;
+}
+
+/**
+ * 清單頁每一列要顯示的項目，在清單頁的設定中勾選（對應 Android 的 data/ListFields.kt）。
+ * 手寫新增的病人以筆跡為標題，床號到出院日四項對它不適用。
+ */
+export const LIST_FIELDS = Object.freeze([
+  ['check', '勾選框'], ['attending', '主治醫師'], ['bed', '床號'], ['name', '病人姓名'],
+  ['chartNo', '病歷號'], ['discharge', '出院日'], ['pen', '筆'], ['trash', '垃圾筒'],
+]);
+
+/** 字體大小可選的倍率（對應 Android 的 TEXT_SCALES）。 */
+export const TEXT_SCALES = Object.freeze([0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5]);
+
+export const defaultListFields = () => Object.fromEntries(LIST_FIELDS.map(([k]) => [k, true]));
+
+/** 清單頁文字標題，fields 關掉的項目不顯示。 */
+export function listTitleText(p, fields) {
+  const chart = p.chartNo ? displayChartNo(p.chartNo) : '';
+  const d = displayDischarge(p.discharge);
+  return [
+    fields.bed ? p.bed ?? '' : null,
+    fields.name ? p.name ?? '' : null,
+    fields.chartNo && chart ? `(${chart})` : null,
+    fields.discharge && d ? d : null,
+  ].filter(s => s != null).join(' ');
 }
 
 const WEEKDAYS = '日一二三四五六';

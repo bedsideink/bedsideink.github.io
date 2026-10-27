@@ -1,5 +1,5 @@
 // IndexedDB 資料層，對應 Android 的 data/Repository.kt。
-// patients：病人（匯入或手寫新增）；segments：每次進入手寫頁所寫的一段筆記；
+// patients：病人（匯入或手寫新增，done 為清單頁勾選的「已處理」）；segments：每次進入手寫頁所寫的一段筆記；
 // meta：單筆狀態 { day, scannedToday }；history：每日快照，以 day 為 key。
 
 import { HISTORY_DAYS, computeImportPlan, isHandwritten, isoDay } from './model.js';
@@ -95,7 +95,7 @@ export async function allSegments() {
 }
 
 /**
- * 換日處理：先把前一天存成歷史，再清空所有筆記與手寫新增的病人，保留前一天匯入的名單並標示未更新。
+ * 換日處理：先把前一天存成歷史，再清空所有筆記、手寫新增的病人與勾選，保留前一天匯入的名單並標示未更新。
  * 回傳 true 表示剛剛換了日。
  */
 export async function ensureToday() {
@@ -106,7 +106,10 @@ export async function ensureToday() {
     if (m) {
       await archive(s, m.day);
       s.segments.clear();
-      for (const p of await allPatients(s)) if (isHandwritten(p)) s.patients.delete(p.id);
+      for (const p of await allPatients(s)) {
+        if (isHandwritten(p)) s.patients.delete(p.id);
+        else if (p.done) s.patients.put({ ...p, done: false });
+      }
     }
     s.meta.put({ day, scannedToday: false }, 0);
     return m != null;
@@ -166,7 +169,7 @@ export async function addHandwritten(title, attending) {
     const sortOrder = ps.reduce((m, p) => Math.max(m, p.sortOrder), -1) + 1;
     return done(s.patients.add({
       sortOrder, attending, bed: null, name: null, chartNo: null, discharge: null,
-      titleInk: title.strokes, titleWidth: title.width, titleHeight: title.height,
+      titleInk: title.strokes, titleWidth: title.width, titleHeight: title.height, done: false,
     }));
   });
   changed();
@@ -178,6 +181,14 @@ export async function updateHandwrittenTitle(id, title) {
   await tx(['patients'], 'readwrite', async s => {
     const p = await done(s.patients.get(id));
     if (p) s.patients.put({ ...p, titleInk: title.strokes, titleWidth: title.width, titleHeight: title.height });
+  });
+  changed();
+}
+
+export async function setDone(id, value) {
+  await tx(['patients'], 'readwrite', async s => {
+    const p = await done(s.patients.get(id));
+    if (p) s.patients.put({ ...p, done: value });
   });
   changed();
 }

@@ -2,7 +2,7 @@
 // 只快取自己的檔案，不轉送任何資料。部署時 deploy-web.sh 會把 VERSION 換成檔案內容的雜湊，
 // 檔案有變動時瀏覽器才會安裝新版，app 內出現「有新版本」提示。
 
-const VERSION = 'a370c062ec5b';
+const VERSION = 'd64c0c3af3dc';
 const CACHE = `bedsideink-${VERSION}`;
 
 const FILES = [
